@@ -1,0 +1,37 @@
+[
+  {
+    "question": "What is the capital of France?",
+    "options": ["Berlin", "Madrid", "Paris", "Rome"],
+    "correctIndex": 2,
+    "timeLimit": 15
+  },
+  {
+    "question": "Which planet is known as the Red Planet?",
+    "options": ["Venus", "Mars", "Jupiter", "Saturn"],
+    "correctIndex": 1,
+    "timeLimit": 15
+  },
+  {
+    "question": "How many players are on a standard soccer team on the field?",
+    "options": ["9", "10", "11", "12"],
+    "correctIndex": 2,
+    "timeLimit": 15
+  },
+  {
+    "question": "What does 'HTTP' stand for?",
+    "options": [
+      "Hyper Transfer Text Protocol",
+      "HyperText Transfer Protocol",
+      "High Transfer Text Program",
+      "Hyperlink Text Transfer Protocol"
+    ],
+    "correctIndex": 1,
+    "timeLimit": 20
+  },
+  {
+    "question": "Which of these is NOT a programming language?",
+    "options": ["Python", "Java", "Cobra", "Photoshop"],
+    "correctIndex": 3,
+    "timeLimit": 15
+  }
+]

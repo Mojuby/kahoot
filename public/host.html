@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Host a Quiz</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div class="stage wide">
+
+  <!-- LOGIN SCREEN -->
+  <section id="screen-login" class="card">
+    <p class="eyebrow">Host console</p>
+    <h1 class="title">Host log in</h1>
+    <p class="subtitle">Enter the host password to set up and run a game. This is set in <code>host-config.json</code> on the server.</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="password-input">Password</label>
+        <input type="text" id="password-input" placeholder="Host password" autocomplete="off" />
+      </div>
+      <button type="submit" class="btn" id="login-btn">Log in</button>
+      <div class="error-text" id="login-error"></div>
+    </form>
+  </section>
+
+  <!-- QUESTION BUILDER SCREEN -->
+  <section id="screen-builder" class="card hidden">
+    <p class="eyebrow">Host console</p>
+    <h1 class="title">Set up this game's questions</h1>
+    <p class="subtitle">Write your own questions below, or load the sample set to get started quickly. Every question needs exactly 4 answer options.</p>
+
+    <div id="builder-list"></div>
+
+    <div class="builder-actions">
+      <button type="button" class="btn ghost" id="add-question-btn">+ Add question</button>
+      <button type="button" class="btn ghost" id="load-sample-btn">Load sample questions</button>
+    </div>
+
+    <div class="error-text" id="builder-error"></div>
+    <button type="button" class="btn" id="create-btn" style="margin-top: 20px;">Create game</button>
+  </section>
+
+  <!-- LOBBY SCREEN -->
+  <section id="screen-lobby" class="card hidden">
+    <div class="pin-marquee">
+      <p class="eyebrow">Game PIN</p>
+      <div class="pin-digits" id="lobby-pin">------</div>
+      <p class="pin-hint">Players go to your address and enter this PIN</p>
+    </div>
+    <div class="crowd-count">Players joined: <span id="lobby-count">0</span> / 150</div>
+    <div class="crowd" id="lobby-crowd"></div>
+    <button class="btn" id="start-btn" disabled>Waiting for players...</button>
+  </section>
+
+  <!-- QUESTION (HOST VIEW) -->
+  <section id="screen-question" class="card hidden">
+    <div class="q-meta">
+      <span class="q-progress" id="q-progress">Question 1/5</span>
+      <span class="q-answered" id="q-answered">0/0 answered</span>
+    </div>
+    <div class="led-strip" id="led-strip"></div>
+    <h1 class="q-text" id="q-text">Question text</h1>
+    <div class="buzzer-grid" id="buzzer-grid">
+      <div class="buzzer a" style="cursor:default;"><span class="shape">▲</span><span id="opt-0">Option A</span></div>
+      <div class="buzzer b" style="cursor:default;"><span class="shape">◆</span><span id="opt-1">Option B</span></div>
+      <div class="buzzer c" style="cursor:default;"><span class="shape">●</span><span id="opt-2">Option C</span></div>
+      <div class="buzzer d" style="cursor:default;"><span class="shape">■</span><span id="opt-3">Option D</span></div>
+    </div>
+  </section>
+
+  <!-- RESULTS (HOST VIEW) -->
+  <section id="screen-results" class="card hidden">
+    <p class="eyebrow" style="text-align:center;" id="results-heading">Correct: A</p>
+    <h1 class="title" style="text-align:center;">⚡ Fastest correct answers</h1>
+    <div id="fastest-list" class="leaderboard-list"></div>
+
+    <h2 class="section-heading">🏆 Standings (top 5)</h2>
+    <div id="results-list" class="leaderboard-list"></div>
+
+    <button class="btn" id="next-btn">Next question</button>
+  </section>
+
+  <!-- FINAL LEADERBOARD (HOST VIEW) -->
+  <section id="screen-final" class="card hidden">
+    <p class="eyebrow" style="text-align:center;">Game over</p>
+    <h1 class="title" style="text-align:center;">Final results</h1>
+    <div id="final-podium" class="podium"></div>
+    <div id="final-list" class="leaderboard-list"></div>
+    <a href="/host.html" class="btn">Host a new game</a>
+  </section>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/shared.js"></script>
+<script src="/js/host.js"></script>
+</body>
+</html>

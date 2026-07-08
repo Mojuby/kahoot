@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Join the Quiz</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- JOIN SCREEN -->
+  <section id="screen-join" class="card">
+    <p class="eyebrow">Live Quiz</p>
+    <h1 class="title">Enter the game</h1>
+    <p class="subtitle">No account needed. Get the 6-digit PIN from whoever is hosting, pick a nickname, and you're in.</p>
+
+    <form id="join-form">
+      <div class="field">
+        <label for="pin-input">Game PIN</label>
+        <input type="text" id="pin-input" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="name-input">Nickname</label>
+        <input type="text" id="name-input" maxlength="20" placeholder="e.g. QuizWhiz" autocomplete="off" />
+      </div>
+      <button type="submit" class="btn" id="join-btn">Join game</button>
+      <div class="error-text" id="join-error"></div>
+    </form>
+
+    <p class="foot-note">Hosting instead? <a href="/host.html">Open the host screen</a></p>
+  </section>
+
+  <!-- WAITING ROOM -->
+  <section id="screen-waiting" class="card hidden">
+    <p class="eyebrow">You're in</p>
+    <h1 class="title" id="waiting-name">-</h1>
+    <div class="center-block">
+      <div class="big-emoji pulse">🎉</div>
+      <p class="subtitle">Sit tight. The host will start the game when everyone's ready.</p>
+    </div>
+  </section>
+
+  <!-- QUESTION SCREEN -->
+  <section id="screen-question" class="card hidden">
+    <div class="q-meta">
+      <span class="q-progress" id="q-progress">Question 1/5</span>
+    </div>
+    <div class="led-strip" id="led-strip"></div>
+    <h1 class="q-text" id="q-text">Question text</h1>
+    <div class="buzzer-grid" id="buzzer-grid">
+      <button class="buzzer a" data-choice="0"><span class="shape">▲</span><span>Option A</span></button>
+      <button class="buzzer b" data-choice="1"><span class="shape">◆</span><span>Option B</span></button>
+      <button class="buzzer c" data-choice="2"><span class="shape">●</span><span>Option C</span></button>
+      <button class="buzzer d" data-choice="3"><span class="shape">■</span><span>Option D</span></button>
+    </div>
+  </section>
+
+  <!-- ANSWER SUBMITTED / WAITING -->
+  <section id="screen-answered" class="card hidden">
+    <div class="center-block">
+      <div class="big-emoji pulse">✅</div>
+      <p class="subtitle">Answer locked in. Waiting for the results...</p>
+    </div>
+  </section>
+
+  <!-- PERSONAL RESULT -->
+  <section id="screen-result" class="card hidden">
+    <div class="center-block">
+      <div class="big-emoji" id="result-emoji">🎯</div>
+      <div class="result-banner" id="result-banner">Correct!</div>
+      <div class="result-points" id="result-points">+0 points</div>
+      <div class="result-total">Total score: <span id="result-total">0</span></div>
+    </div>
+    <p class="subtitle" style="text-align:center; margin-top: 20px;">Waiting for the host to continue...</p>
+  </section>
+
+  <!-- FINAL LEADERBOARD -->
+  <section id="screen-final" class="card hidden">
+    <p class="eyebrow" style="text-align:center;">Game over</p>
+    <h1 class="title" style="text-align:center;">Final results</h1>
+    <div id="final-podium" class="podium"></div>
+    <div id="final-list" class="leaderboard-list"></div>
+    <a href="/" class="btn">Play again</a>
+  </section>
+
+  <!-- ERROR / HOST DISCONNECTED -->
+  <section id="screen-fatal" class="card hidden">
+    <div class="center-block">
+      <div class="big-emoji">⚠️</div>
+      <h1 class="title" id="fatal-title">Something went wrong</h1>
+      <p class="subtitle" id="fatal-message">The host disconnected.</p>
+      <a href="/" class="btn">Back to start</a>
+    </div>
+  </section>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/shared.js"></script>
+<script src="/js/player.js"></script>
+</body>
+</html>

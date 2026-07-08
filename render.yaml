@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: quiz-live
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: HOST_PASSWORD
+        sync: false # set this in the Render dashboard -- keep it out of git
