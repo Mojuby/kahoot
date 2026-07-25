@@ -163,8 +163,14 @@ is optional (defaults to 20s if omitted). Restart the server after editing.
 
 ## Known limitations (by design, for a simple MVP)
 
-- **No reconnection support.** If a player's browser refreshes or drops
-  connection mid-game, they're removed and can't rejoin that same game.
+- **Reconnection works, with one trade-off.** If a player's browser closes or
+  drops connection mid-game, they can rejoin with the same PIN and the exact
+  same nickname and their score picks up where it left off. What it does
+  *not* do: resync them into a question that's already in progress if they
+  reconnect mid-round — they'll rejoin in a waiting state and jump back in
+  on the next question. Also, a disconnected player's slot stays reserved
+  for them (in case they return) rather than freeing up for someone else,
+  even at the 150-player cap.
 - **No persistence.** All game state lives in memory and is lost if the
   server restarts.
 - **Single host device controls the game.** There's no separate "big screen"

@@ -121,13 +121,19 @@ function getLeaderboard(game, limit = null) {
   return limit ? entries.slice(0, limit) : entries;
 }
 
-function sanitizeName(name) {
-  return String(name || '').trim().slice(0, 20);
+// Counts only players who are still actively connected (not mid-game
+// disconnects waiting on a possible rejoin). Used for "X/Y answered" and the
+// early-advance check, so one dropped connection doesn't stall the round.
+function activePlayerCount(game) {
+  let count = 0;
+  for (const p of game.players.values()) {
+    if (!p.disconnected) count++;
+  }
+  return count;
 }
 
-function nameTaken(game, name) {
-  const lower = name.toLowerCase();
-  return Array.from(game.players.values()).some((p) => p.name.toLowerCase() === lower);
+function sanitizeName(name) {
+  return String(name || '').trim().slice(0, 20);
 }
 
 function calculateScore(correct, timeTakenMs, timeLimitMs) {
@@ -175,15 +181,20 @@ function endQuestion(game) {
 
   const q = game.questions[game.currentQuestionIndex];
 
-  for (const [socketId, player] of game.players.entries()) {
+  // Sorted once here so every player can be told their current rank.
+  const sortedEntries = Array.from(game.players.entries()).sort((a, b) => b[1].score - a[1].score);
+
+  sortedEntries.forEach(([socketId, player], index) => {
     const answer = game.answers.get(socketId);
     io.to(socketId).emit('question:personalResult', {
       correct: !!(answer && answer.correct),
       points: answer ? answer.points : 0,
       totalScore: player.score,
-      correctIndex: q.correctIndex
+      correctIndex: q.correctIndex,
+      rank: index + 1,
+      totalPlayers: sortedEntries.length
     });
-  }
+  });
 
   // Who got it right, ranked by how fast they answered (fastest first).
   const topFastest = [];
@@ -198,7 +209,7 @@ function endQuestion(game) {
   io.to(game.hostSocketId).emit('host:questionResults', {
     correctIndex: q.correctIndex,
     answeredCount: game.answers.size,
-    playerCount: game.players.size,
+    playerCount: activePlayerCount(game),
     isLastQuestion: game.currentQuestionIndex + 1 >= game.questions.length,
     topFastest: topFastest.slice(0, TOP_FASTEST_COUNT),
     leaderboard: getLeaderboard(game, STANDINGS_COUNT)
@@ -245,16 +256,40 @@ io.on('connection', (socket) => {
     const game = games.get(String(pin || '').trim());
 
     if (!game) return respond({ ok: false, error: 'Game not found. Check the PIN and try again.' });
+
+    const cleanName = sanitizeName(name);
+    if (!cleanName) return respond({ ok: false, error: 'Enter a nickname.' });
+
+    // If this name already exists in the game AND is currently marked
+    // disconnected, treat this as a rejoin: restore their existing score
+    // under the new socket id instead of creating a fresh player or
+    // blocking them with "already started."
+    const existingEntry = Array.from(game.players.entries())
+      .find(([, p]) => p.name.toLowerCase() === cleanName.toLowerCase());
+
+    if (existingEntry) {
+      const [oldSocketId, oldPlayer] = existingEntry;
+      if (!oldPlayer.disconnected) {
+        return respond({ ok: false, error: 'That nickname is taken. Pick another.' });
+      }
+      game.players.delete(oldSocketId);
+      game.players.set(socket.id, { name: oldPlayer.name, score: oldPlayer.score, disconnected: false });
+      socket.join(game.pin);
+      socket.data.role = 'player';
+      socket.data.pin = game.pin;
+      respond({ ok: true, pin: game.pin, name: oldPlayer.name, rejoined: true, score: oldPlayer.score });
+      broadcastLobby(game);
+      return;
+    }
+
+    // Otherwise this is a brand new player -- only allowed pre-start, and
+    // subject to the room cap.
     if (game.status !== 'lobby') return respond({ ok: false, error: 'This game has already started.' });
     if (game.players.size >= MAX_PLAYERS) {
       return respond({ ok: false, error: 'This game is full (150 players max).' });
     }
 
-    const cleanName = sanitizeName(name);
-    if (!cleanName) return respond({ ok: false, error: 'Enter a nickname.' });
-    if (nameTaken(game, cleanName)) return respond({ ok: false, error: 'That nickname is taken. Pick another.' });
-
-    game.players.set(socket.id, { name: cleanName, score: 0 });
+    game.players.set(socket.id, { name: cleanName, score: 0, disconnected: false });
     socket.join(game.pin);
     socket.data.role = 'player';
     socket.data.pin = game.pin;
@@ -288,11 +323,11 @@ io.on('connection', (socket) => {
 
     io.to(game.hostSocketId).emit('host:answerCount', {
       answeredCount: game.answers.size,
-      playerCount: game.players.size
+      playerCount: activePlayerCount(game)
     });
 
-    if (game.answers.size >= game.players.size) {
-      endQuestion(game); // everyone's in, no need to wait for the clock
+    if (game.answers.size >= activePlayerCount(game)) {
+      endQuestion(game); // everyone active has answered, no need to wait for the clock
     }
   });
 
@@ -305,7 +340,18 @@ io.on('connection', (socket) => {
       sendQuestion(game);
     } else {
       game.status = 'ended';
-      io.to(game.pin).emit('game:over', { leaderboard: getLeaderboard(game) });
+      const sortedEntries = Array.from(game.players.entries()).sort((a, b) => b[1].score - a[1].score);
+      const topTen = sortedEntries.slice(0, 10).map(([, p]) => ({ name: p.name, score: p.score }));
+
+      io.to(game.hostSocketId).emit('game:over', { leaderboard: topTen });
+
+      sortedEntries.forEach(([socketId], index) => {
+        io.to(socketId).emit('game:over', {
+          leaderboard: topTen,
+          myRank: index + 1,
+          totalPlayers: sortedEntries.length
+        });
+      });
     }
   });
 
@@ -319,7 +365,17 @@ io.on('connection', (socket) => {
       socket.to(game.pin).emit('game:hostDisconnected');
       destroyGame(pin);
     } else if (socket.data.role === 'player') {
-      game.players.delete(socket.id);
+      const player = game.players.get(socket.id);
+      if (player) {
+        if (game.status === 'lobby') {
+          // Game hasn't started -- nothing to preserve, just free the slot.
+          game.players.delete(socket.id);
+        } else {
+          // Mark as disconnected but keep their name/score so a rejoin
+          // with the same nickname can reclaim it later.
+          player.disconnected = true;
+        }
+      }
       game.answers.delete(socket.id);
       broadcastLobby(game);
     }

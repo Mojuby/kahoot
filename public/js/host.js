@@ -231,7 +231,7 @@
   // ---- Final ----
   socket.on('game:over', (data) => {
     renderPodium(document.getElementById('final-podium'), data.leaderboard);
-    renderLeaderboardList(document.getElementById('final-list'), data.leaderboard);
+    renderLeaderboardList(document.getElementById('final-list'), data.leaderboard.slice(3, 10), null, 4);
     showScreen('final');
   });
 })();

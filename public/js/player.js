@@ -51,7 +51,9 @@
         return;
       }
       myName = res.name;
-      document.getElementById('waiting-name').textContent = `You're in, ${myName}!`;
+      document.getElementById('waiting-name').textContent = res.rejoined
+        ? `Welcome back, ${myName}!`
+        : `You're in, ${myName}!`;
       showScreen('waiting');
     });
   });
@@ -111,6 +113,8 @@
     }
     document.getElementById('result-points').textContent = `+${data.points} points`;
     document.getElementById('result-total').textContent = data.totalScore;
+    document.getElementById('result-rank').textContent =
+      `Currently ranked #${data.rank} of ${data.totalPlayers}`;
 
     emoji.classList.remove('pop');
     void emoji.offsetWidth;
@@ -122,7 +126,9 @@
   // ---- Final leaderboard ----
   socket.on('game:over', (data) => {
     renderPodium(document.getElementById('final-podium'), data.leaderboard);
-    renderLeaderboardList(document.getElementById('final-list'), data.leaderboard, myName);
+    renderLeaderboardList(document.getElementById('final-list'), data.leaderboard.slice(3, 10), myName, 4);
+    document.getElementById('final-my-rank').textContent =
+      `Your final rank: #${data.myRank} of ${data.totalPlayers}`;
     showScreen('final');
   });
 

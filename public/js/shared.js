@@ -48,13 +48,13 @@ function createLedTimer(containerEl, segmentCount = 20) {
   return { start, stop };
 }
 
-function renderLeaderboardList(containerEl, entries, myName = null) {
+function renderLeaderboardList(containerEl, entries, myName = null, startRank = 1) {
   containerEl.innerHTML = entries
     .map((entry, i) => {
       const isMe = myName && entry.name === myName;
       return `
         <div class="leaderboard-row ${isMe ? 'me' : ''}" style="animation-delay:${i * 70}ms">
-          <span class="leaderboard-rank">${i + 1}</span>
+          <span class="leaderboard-rank">${startRank + i}</span>
           <span class="leaderboard-name">${escapeHtml(entry.name)}</span>
           <span class="leaderboard-score">${entry.score}</span>
         </div>`;
